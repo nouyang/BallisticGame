@@ -17,7 +17,7 @@ FPS = 60 # frames per second setting
 fpsClock = pygame.time.Clock()
 
 # set up the window
-DISPLAYSURF = pygame.display.set_mode((1280, 720), 0, 32)
+DISPLAYSURF = pygame.display.set_mode((640, 720), 0, 32)
 pygame.display.set_caption('Ballistic Game')
 
 backgroundImg = pygame.image.load('images/background.png')
@@ -47,12 +47,32 @@ DISPLAYSURF.blit(cannonBaseImg, cannonBasePos)
 t = 0 # time
 state = ballPos # space
 v = (0, 0) # velocity
-vm = 50 # initial speed
+vm = 60 # initial speed
 launched = False # ball shoted
 v0 = (-99, -99)
 time_f = 0
 w = -45. # deg/ sec
 theta = 0
+
+
+WIDTH =200 
+HEIGHT = 51
+sliderVelocity =  pygame.surface.Surface((WIDTH, HEIGHT))
+LOCX, LOCY = 0, 40
+
+GOALX = 200
+
+
+def createSlider():
+    for x in range(WIDTH):
+        # c = int((x/(WIDTH-1.))*255.)
+        sliderColor = (200, 0, 0)
+        line_rect = Rect(x, 0, 1, HEIGHT)
+        pygame.draw.rect(sliderVelocity, sliderColor, line_rect)
+    return sliderVelocity
+
+sliderVel = createSlider()
+sliderVelPos = 10
 
 # the main game loop
 while True:
@@ -65,16 +85,18 @@ while True:
         vm = sqrt(v[0]*v[0] + v[1]*v[1])
         s0 = ballPos # initial position
         state = (s0[0] + v0[0]*t + a[0]*t*t/2, s0[1] + v0[1]*t + a[1]*t*t/2)
-        if state[1] >= 486: # if hit the ground
+        # if state[1] >= 486: # if hit the ground
+        if state[0] >= GOALX: # if hit the board  
             time_f = t
             print('Time taken', time_f)
-            vm = 50 # initial speed
+            print('Final angle', theta)
+            vm = 60 # initial speed
             launched = False
 
     #  set informations to print
     font = pygame.font.Font(None, 30)
-    text_w = font.render("w_fixed, theta = %.2f, %.2f" % (w, theta), 1, (10, 10, 10))
-    text_w_pos = (300, 600)
+    text_w = font.render("w, theta = %.2f, %.2f" % (w, theta), 1, (10, 10, 10))
+    text_w_pos = (300, 620)
 
     font = pygame.font.Font(None, 30)
     text_v0= font.render("v0= %.2f, %.2f" % v0, 1, (10, 10, 10))
@@ -86,7 +108,7 @@ while True:
 
 
     text_ang = font.render("angle = %d" % ang, 1, (10, 10, 10))
-    text_ang_pos = (300, 560)
+    text_ang_pos = (300, 640)
 
     text_vm = font.render("vm = %.1f m/s" % vm, 1, (10, 10, 10))
     text_vm_pos = (0, 560)
@@ -109,8 +131,8 @@ while True:
     ballRot = pygame.transform.rotate(ballImg, theta)
 
 
+
     # blit the new scene
-    DISPLAYSURF.blit(text_w, text_w_pos)
     DISPLAYSURF.blit(backgroundImg, (0,0))
     DISPLAYSURF.blit(cannonMovImg, cannonPos)
     DISPLAYSURF.blit(ballRot, state)
@@ -124,6 +146,33 @@ while True:
     DISPLAYSURF.blit(text_x, text_x_pos)
     DISPLAYSURF.blit(text_y, text_y_pos)
     DISPLAYSURF.blit(text_ang, text_ang_pos)
+    DISPLAYSURF.blit(text_w, text_w_pos)
+    # blit the velocity slider
+    DISPLAYSURF.blit(sliderVel, (LOCX, LOCY))
+
+
+    x, y = pygame.mouse.get_pos()
+
+    # If the mouse was pressed on one of the sliders, adjust the color component
+    if pygame.mouse.get_pressed()[0]:
+        # pg.display.set_caption("PyGame Color Test - " + str(tuple(color)))
+        if y > LOCY and y < (LOCY + HEIGHT):
+            if x > LOCX and x < (LOCX + WIDTH):
+                sliderVelPos = x
+
+    # draw circle for slider to represent current setting
+    buttonPos = (sliderVelPos, HEIGHT) 
+    pygame.draw.circle(DISPLAYSURF, (255, 255, 255), buttonPos, 20)
+
+    # goal pos
+    pygame.draw.circle(DISPLAYSURF, (255, 255, 255), (GOALX, 420), 2)
+    pygame.draw.circle(DISPLAYSURF, (255, 255, 255), (GOALX, 440), 2)
+    pygame.draw.circle(DISPLAYSURF, (255, 255, 255), (GOALX, 460), 2)
+
+    text_slider = font.render("sliderPos in x = %.1f s" % sliderVelPos, 1, (10, 10, 10))
+    text_slider_pos = (0, LOCY + HEIGHT + 10 )
+    DISPLAYSURF.blit(text_slider, text_slider_pos)
+
 
     # take care of events
     for event in pygame.event.get():
@@ -132,6 +181,7 @@ while True:
             sys.exit()
         elif event.type == KEYDOWN:
             if event.key == K_SPACE: # space key to launch
+                w = (sliderVelPos / WIDTH) * -50
                 ballPos = (22,478)
                 s = ballPos
                 t = 0
